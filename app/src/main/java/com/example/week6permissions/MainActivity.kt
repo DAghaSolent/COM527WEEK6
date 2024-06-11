@@ -5,13 +5,17 @@ import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Bundle
+import android.preference.PreferenceManager
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -21,7 +25,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.zIndex
 import com.example.week6permissions.ui.theme.Week6PermissionsTheme
+import org.osmdroid.config.Configuration
+import org.osmdroid.tileprovider.tilesource.TileSourceFactory
+import org.osmdroid.util.GeoPoint
+import org.osmdroid.views.MapView
 
 class MainActivity : ComponentActivity(), LocationListener{
 
@@ -36,7 +46,7 @@ class MainActivity : ComponentActivity(), LocationListener{
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    DisplayLatLon()
+                    MapComposable(geoPoint = GeoPoint(51.05, -0.72))
                 }
             }
         }
@@ -90,16 +100,41 @@ class MainActivity : ComponentActivity(), LocationListener{
     }
 
     @Composable
-    fun DisplayLatLon(){
+    fun MapComposable(geoPoint: GeoPoint) {
         var latlon by remember { mutableStateOf(LatLon(51.05, -0.72)) }
+        // var latlon by remember { mutableStateOf(GeoPoint(51.05,-0.72)) }
 
-        viewModel.latLonLiveData.observe(this){
+        viewModel.latLonLiveData.observe(this) {
             latlon = it
         }
 
-        Text("Latitude: ${latlon.lat}  Longitude: ${latlon.lon}")
-    }
+        Box(modifier = Modifier.fillMaxSize()) {
+            Row(modifier = Modifier
+                    .fillMaxWidth()
+                    .zIndex(2.0f)
+            ) {
+                Text("Latitude: ${latlon.lat}  Longitude: ${latlon.lon}")
+            }
 
+            AndroidView(
+                factory = { ctx ->
+                    // This line sets the user agent, a requirement to download OSM maps
+                    Configuration.getInstance()
+                        .load(ctx, PreferenceManager.getDefaultSharedPreferences(ctx))
+
+                    MapView(ctx).apply {
+                        setClickable(true)
+                        setMultiTouchControls(true)
+                        setTileSource(TileSourceFactory.MAPNIK)
+                        controller.setZoom(14.0)
+
+                    }
+                },
+
+                update = { view -> view.controller.setCenter(GeoPoint(latlon.lat, latlon.lon)) }
+            )
+        }
+    }
 }
 
 
