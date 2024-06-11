@@ -132,6 +132,7 @@ class MainActivity : ComponentActivity(), LocationListener{
                     val marker1 = Marker(map1)
                     val marker2 = Marker(map1)
                     val marker3 = Marker(map1)
+                    val markerUtilita = Marker(map1)
 
                     marker1.apply {
                         position = GeoPoint(50.91, -1.36)
@@ -148,9 +149,16 @@ class MainActivity : ComponentActivity(), LocationListener{
                         title = "Local Train Station from Home Address"
                     }
 
+                    markerUtilita.apply {
+                        position = GeoPoint(50.92, -1.43)
+                        title = "Utilita Shirley Branch"
+                        icon = getDrawable(R.drawable.utilita)
+                    }
+
                     map1.overlays.add(marker1)
                     map1.overlays.add(marker2)
                     map1.overlays.add(marker3)
+                    map1.overlays.add(markerUtilita)
                     map1
                 },
 
