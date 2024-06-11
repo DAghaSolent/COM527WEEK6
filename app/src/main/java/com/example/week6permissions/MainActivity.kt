@@ -32,6 +32,7 @@ import org.osmdroid.config.Configuration
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
+import org.osmdroid.views.overlay.Marker
 
 class MainActivity : ComponentActivity(), LocationListener{
 
@@ -102,7 +103,6 @@ class MainActivity : ComponentActivity(), LocationListener{
     @Composable
     fun MapComposable(geoPoint: GeoPoint) {
         var latlon by remember { mutableStateOf(LatLon(51.05, -0.72)) }
-        // var latlon by remember { mutableStateOf(GeoPoint(51.05,-0.72)) }
 
         viewModel.latLonLiveData.observe(this) {
             latlon = it
@@ -122,13 +122,36 @@ class MainActivity : ComponentActivity(), LocationListener{
                     Configuration.getInstance()
                         .load(ctx, PreferenceManager.getDefaultSharedPreferences(ctx))
 
-                    MapView(ctx).apply {
-                        setClickable(true)
-                        setMultiTouchControls(true)
-                        setTileSource(TileSourceFactory.MAPNIK)
-                        controller.setZoom(14.0)
-
+                    val map1 = MapView(ctx).apply {
+                            setClickable(true)
+                            setMultiTouchControls(true)
+                            setTileSource(TileSourceFactory.MAPNIK)
+                            controller.setZoom(14.0)
                     }
+
+                    val marker1 = Marker(map1)
+                    val marker2 = Marker(map1)
+                    val marker3 = Marker(map1)
+
+                    marker1.apply {
+                        position = GeoPoint(50.91, -1.36)
+                        title = "Home Location"
+                    }
+
+                    marker2.apply{
+                        position = GeoPoint(50.91, -1.39)
+                        title = "Southampton Football Stadium"
+                    }
+
+                    marker3.apply{
+                        position = GeoPoint(50.91, -1.37)
+                        title = "Local Train Station from Home Address"
+                    }
+
+                    map1.overlays.add(marker1)
+                    map1.overlays.add(marker2)
+                    map1.overlays.add(marker3)
+                    map1
                 },
 
                 update = { view -> view.controller.setCenter(GeoPoint(latlon.lat, latlon.lon)) }
