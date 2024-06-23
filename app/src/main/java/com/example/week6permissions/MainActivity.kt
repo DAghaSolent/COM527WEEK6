@@ -33,6 +33,7 @@ import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
+import android.util.Log
 
 class MainActivity : ComponentActivity(), LocationListener{
 
@@ -40,6 +41,11 @@ class MainActivity : ComponentActivity(), LocationListener{
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        viewModel.addPOI(LatLon(50.91, -1.36, "Home Location"))
+        viewModel.addPOI(LatLon(50.91, -1.39, "Southampton Football Club"))
+        viewModel.addPOI(LatLon(50.92, -1.43, "Utilita Shirley Branch"))
+
         setContent {
             Week6PermissionsTheme {
                 // A surface container using the 'background' color from the theme
@@ -83,7 +89,7 @@ class MainActivity : ComponentActivity(), LocationListener{
     override fun onLocationChanged(newLoc: Location){
         viewModel.latLon.lat = newLoc.latitude
         viewModel.latLon.lon = newLoc.longitude
-        viewModel.latLon = LatLon(newLoc.latitude, newLoc.longitude)
+        viewModel.latLon = LatLon(newLoc.latitude, newLoc.longitude, "")
 
         Toast.makeText(this, "Location=${newLoc.latitude},${newLoc.longitude}", Toast.LENGTH_LONG).show()
     }
@@ -102,11 +108,23 @@ class MainActivity : ComponentActivity(), LocationListener{
 
     @Composable
     fun MapComposable(geoPoint: GeoPoint) {
-        var latlon by remember { mutableStateOf(LatLon(51.05, -0.72)) }
+        var latlon by remember { mutableStateOf(LatLon(50.91, -1.36, "Home Location")) }
+        var latLonList by remember { mutableStateOf(listOf<LatLon>()) }
 
         viewModel.latLonLiveData.observe(this) {
             latlon = it
         }
+
+        viewModel.liveLatLonList.observe(this){
+            latLonList = viewModel.latLonList
+
+            if(latLonList.isEmpty()){
+                Log.d("latlon", "Lat Lon List is empty.")
+            }else{
+                Log.d("latlon", "Lat Lon List is not empty")
+            }
+        }
+
 
         Box(modifier = Modifier.fillMaxSize()) {
             Row(modifier = Modifier
@@ -129,40 +147,22 @@ class MainActivity : ComponentActivity(), LocationListener{
                             controller.setZoom(14.0)
                     }
 
-                    val marker1 = Marker(map1)
-                    val marker2 = Marker(map1)
-                    val marker3 = Marker(map1)
-                    val markerUtilita = Marker(map1)
-
-                    marker1.apply {
-                        position = GeoPoint(50.91, -1.36)
-                        title = "Home Location"
-                    }
-
-                    marker2.apply{
-                        position = GeoPoint(50.91, -1.39)
-                        title = "Southampton Football Stadium"
-                    }
-
-                    marker3.apply{
-                        position = GeoPoint(50.91, -1.37)
-                        title = "Local Train Station from Home Address"
-                    }
-
-                    markerUtilita.apply {
-                        position = GeoPoint(50.92, -1.43)
-                        title = "Utilita Shirley Branch"
-                        icon = getDrawable(R.drawable.utilita)
-                    }
-
-                    map1.overlays.add(marker1)
-                    map1.overlays.add(marker2)
-                    map1.overlays.add(marker3)
-                    map1.overlays.add(markerUtilita)
                     map1
                 },
 
-                update = { view -> view.controller.setCenter(GeoPoint(latlon.lat, latlon.lon)) }
+                update = { view ->
+                    view.controller.setCenter(GeoPoint(latlon.lat, latlon.lon))
+
+                    for(poi in latLonList){
+                        val marker = Marker(view)
+                        marker.apply{
+                            position = GeoPoint(poi.lat, poi.lon)
+                            title = poi.title
+                            icon = getDrawable(R.drawable.utilita)
+                        }
+                        view.overlays.add(marker)
+                    }
+                }
             )
         }
     }
